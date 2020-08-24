@@ -6,8 +6,8 @@ from bs4 import BeautifulSoup
 #for parsing the content
 from concurrent.futures import ThreadPoolExecutor
 #for doing the above asynchronously
-import regex
-#for figuring out if the links are real.
+import asyncio
+import aiohttp
 
 
 #each chapter should be of the form
@@ -16,8 +16,8 @@ import regex
 
 class SpaceBattler:
     def __init__(self, link):
-        self.session = requests.Session()
-        self.pool_executor = ThreadPoolExecutor()
+        self.session = requests.session()
+        self.client = aiohttp.ClientSession()
         if 'forums.spacebattles.com' in link:
             if 'reader' in link:
                 self.link = link
@@ -38,9 +38,19 @@ class SpaceBattler:
         page_links = ["{}/page-{}".format(self.link, i+1) for i in range(int(num))]
         return page_links
 
-    def grab_content(self):
-        pass
-        
+    async def grab_content(self, specific_page):
+        '''
+        get all the responses. better?
+        '''
+        print(f"Runnning link ->{specific_page}")
+        await self.client.get(specific_page)
+
+    def executor(self, links):
+        loop = asyncio.get_event_loop()
+        futures = asyncio.gather(*[self.grab_content(i) for i in links])
+        content = loop.run_until_complete()
+        return content       
+
         
 
     def parse_content(self):
@@ -51,4 +61,4 @@ if __name__ == "__main__":
     link_here = "https://forums.spacebattles.com/threads/the-blacks-the-greens-and-the-reds-asoiaf-si-au.792052/reader/"
     x = SpaceBattler(link_here)
     test = x.page_links()
-    print(test)
+    content = x.executor(test)
