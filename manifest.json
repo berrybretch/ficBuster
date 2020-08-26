@@ -1,12 +1,11 @@
 {
-    "manifest_version": 2,
+    "manifest_version":2,
 
-    "name":"TBD",
-    "version": "1.0",
-    "description":"Grab fic on Spacebattles",
+    "name":"SpaceWarriorlmao",
+    "version":"1.0",
+    "description":"spits out epub for threads in spacebattles",
     "background":{
-
-    },
-    "permissions":["storage"]
-
+        "scripts":["main.js"],
+        "persistent":"false"
+    }
 }

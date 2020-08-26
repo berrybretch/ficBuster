@@ -1,0 +1,23 @@
+{
+  "name": "booker",
+  "version": "1.0.0",
+  "description": "create ebook from spacebattles thread",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/berrybretch/ficBuster.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/berrybretch/ficBuster/issues"
+  },
+  "homepage": "https://github.com/berrybretch/ficBuster#readme",
+  "dependencies": {
+    "jquery": "^3.5.1",
+    "node-fetch": "^2.6.0"
+  }
+}
