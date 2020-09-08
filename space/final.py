@@ -7,25 +7,19 @@ import aiohttp
 
 
 class Space:
-    def __init__(self, sesh, url=None):
+    def __init__(self,url=None):
         self.tasks = []
-        self.session = sesh
         self.url = self._validate_url(url)
 
-    def _set_tasks(self):
+    def _get_pages(self):
         page = requests.get(self.url).text
         smol_filter = re.compile("pageNav-page")
         soup = bs(
             page, "lxml", parse_only=SoupStrainer("li", attrs={"class": smol_filter})
         )
         pages = int(soup.findAll("li", class_=smol_filter)[-1].text)
-        for page in range(pages):
-            x = self._fetch_url(f"{self.url}+/page-{page+1}")
-            self.tasks.append(x)
-        return True
+        return pages
 
-    def _get_tasks(self):
-        return self.tasks
 
     @staticmethod
     def _validate_url(url=None):
@@ -41,13 +35,12 @@ class Space:
             else:
                 raise ValueError("Give Me spacebattles link")
 
-    async def _fetch_url(self, url):
+    async def _fetch_url(self, url,session):
         """
         Should be asynchronous task
         """
         print(f"Fetching {url}...")
-        async with self.session.get(url) as response:
-            return response
+        return await session.get(url)
 
     @staticmethod
     def _parse_soup(html):
@@ -64,10 +57,12 @@ class Space:
         return {k: v for k in threads for v in content}
 
     async def build(self):
-        self._set_tasks()
-        futures = await asyncio.gather(*self.tasks)
-        await self.session.close()
-        return futures
+        num = self._get_pages()
+        urls = [self.url+'/page-{}'.format(i+1) for i in range(num)]
+        async with aiohttp.ClientSession() as session:
+            futures = [self._fetch_url(url, session) for url in urls]
+            return await asyncio.gather(*futures)
+
 
 
 test_link = (
