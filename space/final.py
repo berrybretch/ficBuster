@@ -4,14 +4,19 @@ from bs4 import SoupStrainer
 import re
 import asyncio
 import aiohttp
+import pickle
 
 
 class Space:
-    def __init__(self,url=None):
+    def __init__(self, url=None):
         self.tasks = []
         self.url = self._validate_url(url)
 
     def _get_pages(self):
+        '''
+        Find out how many pages are available in the story
+        '''
+        print("Getting pages...")
         page = requests.get(self.url).text
         smol_filter = re.compile("pageNav-page")
         soup = bs(
@@ -20,9 +25,11 @@ class Space:
         pages = int(soup.findAll("li", class_=smol_filter)[-1].text)
         return pages
 
-
     @staticmethod
     def _validate_url(url=None):
+        '''
+        Check if the url is good .
+        '''
         print(f"Validating {url}...")
         if url:
             reg = re.compile("https://forums.spacebattles.com/threads/(.*?)")
@@ -35,7 +42,7 @@ class Space:
             else:
                 raise ValueError("Give Me spacebattles link")
 
-    async def _fetch_url(self, url,session):
+    async def _fetch_url(self, url, session):
         """
         Should be asynchronous task
         """
@@ -44,11 +51,14 @@ class Space:
 
     @staticmethod
     def _parse_soup(html):
+        '''
+        Grab all the good stuff from the response.
+        '''
         print("Straining")
         strainer = SoupStrainer(
             attrs={
-                "class": lambda l: "bbWrapper" in l.split(),
-                "class": lambda l: "threadmarkLabel" in l.split(),
+                "class": "bbWrapper",
+                "class": "threadmarkLabel" ,
             }
         )
         soup = bs(html, "lxml", parse_only=strainer)
@@ -57,11 +67,26 @@ class Space:
         return {k: v for k in threads for v in content}
 
     async def build(self):
+        '''
+        Setup all requests, await them, process the responses that return
+        '''
+        print("Building...")
         num = self._get_pages()
-        urls = [self.url+'/page-{}'.format(i+1) for i in range(num)]
+        urls = [self.url + "/page-{}".format(i + 1) for i in range(num)]
         async with aiohttp.ClientSession() as session:
             futures = [self._fetch_url(url, session) for url in urls]
-            return await asyncio.gather(*futures)
+            content = await asyncio.gather(*futures)
+            text = [await i.text() for i in content]
+        return text
+
+    def wrap(self):
+        '''
+        This is where i throw it all into an ebook ideally.
+        '''        
+        all_content = asyncio.run(self.build())
+        parsed_content = [self._parse_soup(i) for i in all_content]
+        return all_content
+
 
 
 
@@ -73,4 +98,4 @@ test_link2 = "https://forums.spacebattles.com/threads/the-blacks-the-greens-and-
 
 if __name__ == "__main__":
     obj = Space(test_link2)
-    fish = asyncio.run(obj.build())
+    chimken = obj.wrap()
