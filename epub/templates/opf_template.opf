@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<package version="2.0" xmlns="http://www.idpf.org/2007/opf" unique-identifier="BookId">
+
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:opf="http://www.idpf.org/2007/opf">
+    <dc:title>{{ docTitle }}</dc:title>
+    <dc:language>{{ lang }}</dc:language>
+    <dc:identifier id="BookId" opf:scheme="UUID">{{ uid }}</dc:identifier>
+    <dc:creator opf:file-as="{{ docAuthor }}" opf:role="aut">{{ docAuthor }}</dc:creator>
+  </metadata>
+
+  <manifest>
+  {% for i in index %}
+    <item id={{ post_id[i] }} href="{{ threadmarks[i] }}.xhtml" media-type="application/xhtml+xml"/>
+    {% endfor  %}
+  </manifest>
+
+  <spine toc="ncx">
+    {% for id in post_id %}
+    <itemref idref="{{ id }}"/>
+    {% endfor %}
+  </spine>
+
+  <guide>
+    <reference type="loi" title="List Of Illustrations" href="appendix.xhtml#figures" />
+  </guide>
+
+</package>
