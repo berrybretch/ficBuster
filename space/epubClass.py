@@ -1,5 +1,11 @@
 from ebooklib import epub
 
+
+#grab threadmark. grab chapter content
+#add minimal css
+#wrap?
+
+
 class Novel:
     def __init__(
         self,

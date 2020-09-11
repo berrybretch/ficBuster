@@ -1,11 +1,11 @@
 import requests
-from bs4 import BeautifulSoup as bs
-from bs4 import SoupStrainer
+from bs4 import SoupStrainer, BeautifulSoup
 import re
 import asyncio
 import aiohttp
 import pickle
 
+BeautifulSoup
 
 class Space:
     def __init__(self, url=None):
@@ -19,7 +19,7 @@ class Space:
         print("Getting pages...")
         page = requests.get(self.url).text
         smol_filter = re.compile("pageNav-page")
-        soup = bs(
+        soup = BeautifulSoup(
             page, "lxml", parse_only=SoupStrainer("li", attrs={"class": smol_filter})
         )
         pages = int(soup.findAll("li", class_=smol_filter)[-1].text)
@@ -53,18 +53,29 @@ class Space:
     def _parse_soup(html):
         '''
         Grab all the good stuff from the response.
+        good_stuff is 
         '''
         print("Straining")
         strainer = SoupStrainer(
             attrs={
-                "class": "bbWrapper",
-                "class": "threadmarkLabel" ,
+                "class": "message",
             }
         )
-        soup = bs(html, "lxml", parse_only=strainer)
-        threads = [i.text for i in soup.findAll("span", class_="threadmarkLabel")]
-        content = [i.text for i in soup.findAll("div", class_="bbWrapper")]
-        return {k: v for k in threads for v in content}
+        soup = BeautifulSoup(html, 'lxml')
+        articles = soup.select('article.message')
+        title = soup.select('title')[0].text
+        
+        document = {
+            "uid":1010101,
+            "docAuthor": articles[0]["data-author"],
+            "docTitle":title,
+            "index":[i for i, _ in enumerate(articles)],#temporary fix just to get it to work
+            "depth":len(articles),
+            "post_id": [i['data-content'] for i in articles],
+            "threadmarks": [i.select('span.threadmarkLabel')[0].text for i in articles],
+            "content":[i.select('div.bbWrapper')[0].text for i in articles],
+        }
+        return document
 
     async def build(self):
         '''
