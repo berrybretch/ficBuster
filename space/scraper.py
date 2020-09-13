@@ -5,8 +5,6 @@ import asyncio
 import aiohttp
 import pickle
 
-BeautifulSoup
-
 
 class Space:
     def __init__(self, url=None):
@@ -48,39 +46,38 @@ class Space:
         Should be asynchronous task
         """
         print(f"Fetching {url}...")
-        return await session.get(url)
+        return await (session.get(url), url)
 
     @staticmethod
-    def _parse_soup(html):
+    def _parse_soup(html, url):
         """
             Grab all the good stuff from the response.
-            good_stuff is 
+            good_stuff is text.
+            parses a single page.
             """
         print("Straining")
         strainer = SoupStrainer(attrs={"class": "message",})
         soup = BeautifulSoup(html, "lxml")
         articles = soup.select("article.message")
         title = soup.select("title")[0].text
-        lang = soup.find("html")["lang"]
 
         document = {
-            "lang": lang,
-            "uid": 1010101,  # todo generate uuid
+            "lang": "en",
             "docAuthor": articles[0]["data-author"],
             "docTitle": title,
             "index": [
                 i for i, _ in enumerate(articles)
-            ],  # temporary fix just to get it to work
+            ], 
             "depth": len(articles),
             "post_id": [i["data-content"] for i in articles],
             "threadmarks": [i.select("span.threadmarkLabel")[0].text for i in articles],
             "content": [i.select("div.bbWrapper")[0].text for i in articles],
         }
-        return soup
+        return document
 
     async def build(self):
         """
-        Setup all requests, await them, process the responses that return
+        Setup all requests, await them, return the response.text
         """
         print("Building...")
         num = self._get_pages()

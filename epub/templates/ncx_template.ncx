@@ -23,9 +23,9 @@ including those that conform to the relaxed constraints of OPS 2.0 -->
 
   <navMap>
   {% for i in index %}
-    <navPoint class="chapter" id="{{ post_id[i] }}" playOrder="1">
+    <navPoint class="chapter" id="{{ post_id[i] }}" playOrder="{{ i+1 }}">
       <navLabel><text>{{ threadmarks[i] }}</text></navLabel>
-      <content src="ero"/> <!-- name_from_manifest -->
+      <content src="{{ filename[i] }}"/> <!-- name_from_manifest -->
     </navPoint>
     {% endfor %}
   </navMap>
