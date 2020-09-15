@@ -5,12 +5,12 @@ import asyncio
 import aiohttp
 from functools import reduce
 
+
 class Space:
     def __init__(self, url=None):
         self.url = self._validate_url(url)
         self.meta = {}
         self.meta["threadmarks"] = []
-
 
     def _get_pages(self):
         """
@@ -24,17 +24,15 @@ class Space:
         print("Getting pages...")
         page = requests.get(self.url).text
         smol_filter = re.compile("pageNav-page")
-        soup = BeautifulSoup( page, "lxml")
+        soup = BeautifulSoup(page, "lxml")
         pages = int(soup.findAll("li", class_=smol_filter)[-1].text)
-        articles = soup.select('article.message')
-        author = articles[0]['data-author']
-        title = soup.select('title')[0].text
+        articles = soup.select("article.message")
+        author = articles[0]["data-author"]
+        title = soup.select("title")[0].text
 
-        self.meta =dict( self.meta ,**{
-            "lang":"en",
-            "docAuthor":author,
-            "docTitle":title,
-        } )
+        self.meta = dict(
+            self.meta, **{"lang": "en", "docAuthor": author, "docTitle": title,}
+        )
         return pages
 
     @staticmethod
@@ -49,10 +47,10 @@ class Space:
             url = url.rstrip("/")
             if reg.match(url):
                 if "/reader" in url:
-                    print('Url seems fine')
+                    print("Url seems fine")
                     return url
                 else:
-                    print('Url seems fine')
+                    print("Url seems fine")
                     return url + "/reader"
             else:
                 raise ValueError("Give Me spacebattles link")
@@ -86,8 +84,7 @@ class Space:
         threadmarks = [i.select("span.threadmarkLabel")[0].text for i in articles]
         content = [i.select("div.bbWrapper")[0].text for i in articles]
         print("Done Straining, zipping it up...")
-        story = dict(zip(post_id, content)) 
-
+        story = dict(zip(post_id, content))
         return story, threadmarks
 
     async def build(self):
@@ -96,7 +93,7 @@ class Space:
         """
         print("Building...")
         if not self.url:
-            raise(ValueError)
+            raise (ValueError)
         num = self._get_pages()
         urls = [self.url + "/page-{}".format(i + 1) for i in range(num)]
         async with aiohttp.ClientSession() as session:
@@ -110,20 +107,17 @@ class Space:
             Populate object variables so i can shove entire object into epub class instead
         """
         all_content = asyncio.run(self.build())
-        #all content is already in order, returns text
-        parsed_content = [self._parse_soup(i) for i in all_content]   
-        #returns tuple of story dictionary and threadmarks
+        # all content is already in order, returns text
+        parsed_content = [self._parse_soup(i) for i in all_content]
+        # returns tuple of story dictionary and threadmarks
 
         self.meta["story"] = reduce(self.dict_merge, parsed_content[0])
         for i in parsed_content[1]:
-            self.meta['threadmarks'].append(i) 
-
+            self.meta["threadmarks"].append(i)
 
     @staticmethod
     def dict_merge(dict1, dict2):
-        '''
+        """
         Im going to use this for merging all posts together into one large dictionary
-        '''
+        """
         return dict(dict1, **dict2)
-
-

@@ -10,7 +10,7 @@ env = Environment(
 
 class Epub:
     def __init__(self, meta):
-        '''shape of scraper.meta
+        """shape of scraper.meta
             threadmarks: [list of threadmarks]
             lang: eng
             author:
@@ -19,11 +19,13 @@ class Epub:
             uid:
             filenames: []
 
-        '''
+        """
         self.meta = meta
         self.meta["uid"] = uuid.uuid4()
-        #todo self.meta['depth']
-        self.meta['filename'] = [f'{i.replace(" ", "")}' for i in self.meta['threadmarks']]
+        # todo self.meta['depth']
+        self.meta["filename"] = [
+            f'{i.replace(" ", "")}' for i in self.meta["threadmarks"]
+        ]
 
     @staticmethod
     def generate_ncx(meta):
@@ -36,9 +38,8 @@ class Epub:
             None
         
         """
-        template = env.get_template('ncx_template.ncx')
+        template = env.get_template("ncx_template.ncx")
         template.stream(meta)
-
 
     @staticmethod
     def generate_opf(meta):
@@ -48,26 +49,24 @@ class Epub:
         params:
 
         """
-        template = env.get_template('opf_template.opf')
+        template = env.get_template("opf_template.opf")
         template.stream(meta)
 
     def generate_meta_inf(self):
-        Template('meta_template').dump(
-            "container.xml"
-        )
+        Template("meta_template").dump("container.xml")
 
     @staticmethod
     def generate_chapters(meta):
         template = env.get_template("chapter_template.xhtml")
-        for index, key in meta['story']:
+        for index, key in meta["story"]:
             template.stream(
                 {
-                    'threadmark':meta['threadmarks'][index],
-                    'content':meta['story'][key]
+                    "threadmark": meta["threadmarks"][index],
+                    "content": meta["story"][key],
                 }
-            ).dump(meta['filename'][index])
+            ).dump(meta["filename"][index])
 
     @staticmethod
     def generate_title(meta):
-        template = env.get_template('title_template.xhtml')
+        template = env.get_template("title_template.xhtml")
         template.stream(meta)
