@@ -7,9 +7,9 @@ from functools import reduce
 
 class Space:
     def __init__(self, url=None):
-        self.tasks = []
         self.url = self._validate_url(url)
         self.meta = {}
+        self.meta["threadmarks"] = []
 
 
     def _get_pages(self):
@@ -30,11 +30,11 @@ class Space:
         author = articles[0]['data-author']
         title = soup.select('title')[0].text
 
-        self.meta = {
+        self.meta =dict( self.meta ,**{
             "lang":"en",
             "docAuthor":author,
             "docTitle":title,
-        } 
+        } )
         return pages
 
     @staticmethod
@@ -86,9 +86,9 @@ class Space:
         threadmarks = [i.select("span.threadmarkLabel")[0].text for i in articles]
         content = [i.select("div.bbWrapper")[0].text for i in articles]
         print("Done Straining, zipping it up...")
-        document = dict(zip(post_id, content)) 
-        
-        return document
+        story = dict(zip(post_id, content)) 
+
+        return story, threadmarks
 
     async def build(self):
         """
@@ -107,18 +107,17 @@ class Space:
 
     def wrap(self):
         """
-        Need to combine all the pages into one dictionary, with all pertinent material.
-        each page returns a dictionary
-        depth,threadmarks,content, post_id keys need to accumulate in order.
+            Populate object variables so i can shove entire object into epub class instead
         """
         all_content = asyncio.run(self.build())
         #all content is already in order, returns text
         parsed_content = [self._parse_soup(i) for i in all_content]   
-        #returns post_id:content dictionaries for each page
-        combined_content = reduce(self.dict_merge, parsed_content) 
-        #combines all the dictionaries into one huge one
-        #i just really wanted to use reduce once in my life
-        return combined_content
+        #returns tuple of story dictionary and threadmarks
+
+        self.meta["story"] = reduce(self.dict_merge, parsed_content[0])
+        for i in parsed_content[1]:
+            self.meta['threadmarks'].append(i) 
+
 
     @staticmethod
     def dict_merge(dict1, dict2):

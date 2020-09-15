@@ -9,12 +9,24 @@ env = Environment(
 
 
 class Epub:
-    def __init__(self, document):
-        self.document = document
-        self.document["uid"] = uuid.uuid4()
+    def __init__(self, meta):
+        '''shape of scraper.meta
+            threadmarks: [list of threadmarks]
+            lang: eng
+            author:
+            title:
+            story: { post_id: string}
+            uid:
+            filenames: []
+
+        '''
+        self.meta = meta
+        self.meta["uid"] = uuid.uuid4()
+        #todo self.meta['depth']
+        self.meta['filename'] = [f'{i.replace(" ", "")}' for i in self.meta['threadmarks']]
 
     @staticmethod
-    def generate_ncx(document):
+    def generate_ncx(meta):
         """
         Generates .ncx file from template in templates folder
 
@@ -24,53 +36,38 @@ class Epub:
             None
         
         """
-        document["filename"] = [
-            f'{document["threadmarks"][index]}.xhtml' for index in document["index"]
-        ]
-        template = env.get_template("ncx_template.ncx")
-        template.stream(document).dump("toc.ncx")
+        template = env.get_template('ncx_template.ncx')
+        template.stream(meta)
+
 
     @staticmethod
-    def generate_opf(document):
+    def generate_opf(meta):
         """
         generates opf document from content inside document
 
         params:
 
-            
-            
         """
-        x = [i.replace(" ", "") for i in document["threadmarks"]]
-        document["threadmarks"] = x
-        template = env.get_template("opf_template.opf")
-        template.stream(document).dump("content.opf")
+        template = env.get_template('opf_template.opf')
+        template.stream(meta)
 
-    @staticmethod
-    def generate_meta_inf():
-        """
-        Generates generic metainfo document.
-        params:
-            none
-        returns:
-            none
-        """
+    def generate_meta_inf(self):
         Template('meta_template').dump(
             "container.xml"
         )
 
     @staticmethod
-    def generate_chapters(document):
-        """
-        Generates chapters from content inside dict
-        params:
-            document
-        """
+    def generate_chapters(meta):
         template = env.get_template("chapter_template.xhtml")
-        for index in document["index"]:
-            filename = f'{document["threadmarks"][index]}.xhtml'
+        for index, key in meta['story']:
             template.stream(
                 {
-                    "threadmarkLabel": document["threadmarks"][index],
-                    "content": document["content"][index],
+                    'threadmark':meta['threadmarks'][index],
+                    'content':meta['story'][key]
                 }
-            ).dump(filename)
+            ).dump(meta['filename'][index])
+
+    @staticmethod
+    def generate_title(meta):
+        template = env.get_template('title_template.xhtml')
+        template.stream(meta)
