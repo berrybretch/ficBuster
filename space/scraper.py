@@ -10,18 +10,28 @@ class Space:
     def __init__(self, url=None):
         self.tasks = []
         self.url = self._validate_url(url)
+        self.meta = {}
+
 
     def _get_pages(self):
         """
         Find out how many pages are available in the story
+        return metadata for lang, author and title. 
         """
         print("Getting pages...")
         page = requests.get(self.url).text
         smol_filter = re.compile("pageNav-page")
-        soup = BeautifulSoup(
-            page, "lxml", parse_only=SoupStrainer("li", attrs={"class": smol_filter})
-        )
+        soup = BeautifulSoup( page, "lxml")
         pages = int(soup.findAll("li", class_=smol_filter)[-1].text)
+        articles = soup.select('article.message')
+        author = articles[0]['data-author']
+        title = soup.select('title')[0].text
+
+        self.meta = {
+            "lang":"en",
+            "docAuthor":author,
+            "docTitle":title,
+        } 
         return pages
 
     @staticmethod
@@ -46,34 +56,27 @@ class Space:
         Should be asynchronous task
         """
         print(f"Fetching {url}...")
-        return await (session.get(url), url)
+        return await session.get(url)
 
     @staticmethod
-    def _parse_soup(html, url):
+    def _parse_soup(html):
         """
             Grab all the good stuff from the response.
             good_stuff is text.
             parses a single page.
             """
-        print("Straining")
+        print("Straining...")
         strainer = SoupStrainer(attrs={"class": "message",})
         soup = BeautifulSoup(html, "lxml")
         articles = soup.select("article.message")
-        title = soup.select("title")[0].text
-
-        document = {
-            "lang": "en",
-            "docAuthor": articles[0]["data-author"],
-            "docTitle": title,
-            "index": [
-                i for i, _ in enumerate(articles)
-            ], 
-            "depth": len(articles),
-            "post_id": [i["data-content"] for i in articles],
-            "threadmarks": [i.select("span.threadmarkLabel")[0].text for i in articles],
-            "content": [i.select("div.bbWrapper")[0].text for i in articles],
-        }
-        return document
+        post_id = [i["data-content"] for i in articles]
+        threadmarks = [i.select("span.threadmarkLabel")[0].text for i in articles]
+        content = [i.select("div.bbWrapper")[0].text for i in articles]
+        print("Done Straining, zipping it up...")
+        
+        document = dict(zip(post_id, content)) 
+        
+        return content
 
     async def build(self):
         """
@@ -90,8 +93,12 @@ class Space:
 
     def wrap(self):
         """
-        This is where i throw it all into an ebook ideally.
+        Need to combine all the pages into one dictionary, with all pertinent material.
+        each page returns a dictionary
+        lang, author and title are consistent
+        depth,threadmarks,content, post_id keys need to accumulate in order.
         """
         all_content = asyncio.run(self.build())
         parsed_content = [self._parse_soup(i) for i in all_content]
+        ##parsed content returns a tuple of dicks for every single page. how do i combine these?
         return all_content
