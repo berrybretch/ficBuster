@@ -3,7 +3,6 @@ from bs4 import SoupStrainer, BeautifulSoup
 import re
 import asyncio
 import aiohttp
-from functools import reduce
 
 
 class Space:
@@ -11,6 +10,7 @@ class Space:
         self.url = self._validate_url(url)
         self.meta = {}
         self.meta["threadmarks"] = []
+        self.meta["story"] = {}
 
     def _get_pages(self):
         """
@@ -25,7 +25,12 @@ class Space:
         page = requests.get(self.url).text
         smol_filter = re.compile("pageNav-page")
         soup = BeautifulSoup(page, "lxml")
-        pages = int(soup.findAll("li", class_=smol_filter)[-1].text)
+        pages_tag = soup.findAll("li", class_=smol_filter)
+        if pages_tag:
+            pages = int(pages_tag.text)
+        else:
+            pages = 1
+
         articles = soup.select("article.message")
         author = articles[0]["data-author"]
         title = soup.select("title")[0].text
@@ -33,6 +38,7 @@ class Space:
         self.meta = dict(
             self.meta, **{"lang": "en", "docAuthor": author, "docTitle": title,}
         )
+        
         return pages
 
     @staticmethod
@@ -67,15 +73,14 @@ class Space:
         print(f"Fetching {url}...")
         return await session.get(url)
 
-    @staticmethod
-    def _parse_soup(html):
-        """
-        Parses soup, returns thread content in dictionary format
 
-        params:   
-            html_file
+    def _parse_soup(self,html):
+        """
+        Turns html into soup, parses it for text i need, then populates self.meta.
+        params:
+            html:str
         returns:
-            dictionary(post_id:content) 
+            none
         """
         print("Straining...")
         soup = BeautifulSoup(html, "lxml")
@@ -83,9 +88,13 @@ class Space:
         post_id = [i["data-content"] for i in articles]
         threadmarks = [i.select("span.threadmarkLabel")[0].text for i in articles]
         content = [i.select("div.bbWrapper")[0].text for i in articles]
-        print("Done Straining, zipping it up...")
-        story = dict(zip(post_id, content))
-        return story, threadmarks
+        
+        print("Done Straining, populating object")
+        
+        self.meta["story"] = dict( self.meta["story"], **dict(zip(post_id, content)))
+        for i in threadmarks:
+            self.meta['threadmarks'].append(i)
+
 
     async def build(self):
         """
@@ -104,20 +113,12 @@ class Space:
 
     def wrap(self):
         """
-            Populate object variables so i can shove entire object into epub class instead
+            Runs blocking async code, then runs function to parse response for each
+            params:
+                none
+            returns:
+                none
         """
         all_content = asyncio.run(self.build())
-        # all content is already in order, returns text
-        parsed_content = [self._parse_soup(i) for i in all_content]
-        # returns tuple of story dictionary and threadmarks
-
-        self.meta["story"] = reduce(self.dict_merge, parsed_content[0])
-        for i in parsed_content[1]:
-            self.meta["threadmarks"].append(i)
-
-    @staticmethod
-    def dict_merge(dict1, dict2):
-        """
-        Im going to use this for merging all posts together into one large dictionary
-        """
-        return dict(dict1, **dict2)
+        for i in all_content:
+            self._parse_soup(i)
