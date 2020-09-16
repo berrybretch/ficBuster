@@ -8,14 +8,15 @@ import aiohttp
 class Space:
     def __init__(self, url=None):
         self.url = self._validate_url(url)
-        self.meta = {}
-        self.meta["threadmarks"] = []
-        self.meta["story"] = {}
+        self.data = {}
+        self.data["threadmarks"] = []
+        self.data["story"] = {}
 
     def _get_pages(self):
         """
         Find out how many pages are available in the story
-        return metadata for lang, author and title. 
+        populate self.data for lang, author and title.
+        returns number of pages available for scraping 
         params:
             none
         returns:
@@ -35,10 +36,10 @@ class Space:
         author = articles[0]["data-author"]
         title = soup.select("title")[0].text
 
-        self.meta = dict(
-            self.meta, **{"lang": "en", "docAuthor": author, "docTitle": title,}
+        self.data = dict(
+            self.data, **{"lang": "en", "docAuthor": author, "docTitle": title,}
         )
-        
+
         return pages
 
     @staticmethod
@@ -73,10 +74,9 @@ class Space:
         print(f"Fetching {url}...")
         return await session.get(url)
 
-
-    def _parse_soup(self,html):
+    def _parse_soup(self, html):
         """
-        Turns html into soup, parses it for text i need, then populates self.meta.
+        Turns html into soup, parses it for text i need, then populates self.data.
         params:
             html:str
         returns:
@@ -88,13 +88,12 @@ class Space:
         post_id = [i["data-content"] for i in articles]
         threadmarks = [i.select("span.threadmarkLabel")[0].text for i in articles]
         content = [i.select("div.bbWrapper")[0].text for i in articles]
-        
-        print("Done Straining, populating object")
-        
-        self.meta["story"] = dict( self.meta["story"], **dict(zip(post_id, content)))
-        for i in threadmarks:
-            self.meta['threadmarks'].append(i)
 
+        print("Done Straining, populating object...")
+
+        self.data["story"] = dict(self.data["story"], **dict(zip(post_id, content)))
+        for i in threadmarks:
+            self.data["threadmarks"].append(i)
 
     async def build(self):
         """

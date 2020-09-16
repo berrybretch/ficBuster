@@ -1,5 +1,5 @@
 from jinja2 import Environment, FileSystemLoader, select_autoescape, Template
-import os
+import tempfile
 import uuid
 
 env = Environment(
@@ -9,64 +9,93 @@ env = Environment(
 
 
 class Epub:
-    def __init__(self, meta):
-        """shape of scraper.meta
+    def __init__(self, data):
+        """shape of scraper.data
             threadmarks: [list of threadmarks]
             lang: eng
             author:
             title:
             story: { post_id: string}
             uid:
-            filenames: []
-
         """
-        self.meta = meta
-        self.meta["uid"] = uuid.uuid4()
-        # todo self.meta['depth']
-        self.meta["filename"] = [
-            f'{i.replace(" ", "")}' for i in self.meta["threadmarks"]
+        self.data = data
+        self.data["uid"] = str(uuid.uuid4())
+        # todo self.data['depth']
+        self.data["filename"] = [
+            f'{i.replace(" ", "")}' for i in self.data["threadmarks"]
         ]
+        self.data['oebps'] = ''
+        self.data['meta_inf'] = ''
 
-    @staticmethod
-    def generate_ncx(meta):
-        """
-        Generates .ncx file from template in templates folder
 
-        params:
-            document:dict
-        returns:
-            None
-        
-        """
+    def generate_ncx(self,location):
         template = env.get_template("ncx_template.ncx")
-        template.stream(meta)
+        template.stream(self.data).dump(f'{location}/toc.ncx')
 
-    @staticmethod
-    def generate_opf(meta):
-        """
-        generates opf document from content inside document
-
-        params:
-
-        """
+    def generate_opf(self, location):
         template = env.get_template("opf_template.opf")
-        template.stream(meta)
+        template.stream(self.data).dump(f'{location}/content.opf')
 
-    def generate_meta_inf(self):
-        Template("meta_template").dump("container.xml")
+    def generate_meta_inf(self, location):
+        Template("data_template").dump(f"{location}/container.xml")
+    
 
-    @staticmethod
-    def generate_chapters(meta):
+    def generate_chapters(self, location):
         template = env.get_template("chapter_template.xhtml")
-        for index, key in meta["story"]:
+        for index, key in self.data["story"]:
             template.stream(
                 {
-                    "threadmark": meta["threadmarks"][index],
-                    "content": meta["story"][key],
+                    "threadmark": self.data["threadmarks"][index],
+                    "content": self.data["story"][key],
                 }
-            ).dump(meta["filename"][index])
+            ).dump(f'{location}/{self.data["filename"][index]}')
 
-    @staticmethod
-    def generate_title(meta):
+
+    def generate_title(self, location):
         template = env.get_template("title_template.xhtml")
-        template.stream(meta)
+        template.stream(self.data).dump(f'{location}/title.xhtml')
+
+    def generate_css(self, location):
+        env.get_template("page_css.css").stream().dump(f'{location}/page_style.css')
+        env.get_template("stylesheet.css").stream().dump(f'{location}/stylesheet.css')
+
+    def dir_constructor(self):
+        with tempfile.TemporaryDirectory(dir='/tmp') as parent:
+
+            #create nested directories
+            oebps = tempfile.mkdtemp(dir=parent)
+            meta_inf = tempfile.mkdtemp(dir=parent)
+
+            #i need these paths for later
+            self.data['oebps']+= oebps.split('/')[-1]
+            self.data['meta_inf'] += meta_inf.split('/')[-1]
+
+            #start dumping all docs
+            self.generate_title(parent)
+            self.generate_ncx(parent)
+            self.generate_meta_inf(meta_inf)
+            self.generate_opf(parent)
+            self.generate_chapters(oebps)
+            self.generate_css(parent)
+            Template('application/epub+zip').stream().dump(f'{parent}/mimetype')
+
+            #zip_it_all_together
+            
+
+
+
+
+
+
+
+        
+
+
+            
+
+
+
+
+
+
+        
