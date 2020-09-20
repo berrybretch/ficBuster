@@ -1,12 +1,16 @@
 from jinja2 import Environment, FileSystemLoader, select_autoescape, Template
 import tempfile
 import uuid
+import shutil
 
 env = Environment(
     loader=FileSystemLoader("./templates"),
     autoescape=select_autoescape(["html", "xml"]),
 )
-
+##should have three functions.
+#create all the documentation in one function
+#zip the docs up
+#cleanup everything
 
 class Epub:
     def __init__(self, data):
@@ -20,7 +24,6 @@ class Epub:
         """
         self.data = data
         self.data["uid"] = str(uuid.uuid4())
-        # todo self.data['depth']
         self.data["filename"] = [
             f'{i.replace(" ", "")}' for i in self.data["threadmarks"]
         ]
@@ -78,8 +81,9 @@ class Epub:
             self.generate_chapters(oebps)
             self.generate_css(parent)
             Template('application/epub+zip').stream().dump(f'{parent}/mimetype')
-
             #zip_it_all_together
+            shutil.make_archive(self.data['title'], 'zip',parent)
+    
             
 
 
