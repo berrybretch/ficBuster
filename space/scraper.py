@@ -5,11 +5,14 @@ import asyncio
 import aiohttp
 import uuid
 
+
 class Space:
-    def __init__(self, url=None):
+    def __init__(self, url):
         self.url = self._validate_url(url)
         self.data = {}
-        self.data['uid'] = str(uuid.uuid4())
+        self.data["oebps"] = ""
+        self.data["meta_inf"] = ""
+        self.data["uid"] = str(uuid.uuid4())
         self.data["threadmarks"] = []
         self.data["story"] = {}
         self.links = []
@@ -37,6 +40,7 @@ class Space:
         author = articles[0]["data-author"]
         title = soup.select("title")[0].text
 
+        # appends author, language and title information to self.data
         self.data = dict(
             self.data, **{"lang": "en", "docAuthor": author, "docTitle": title,}
         )
@@ -64,10 +68,6 @@ class Space:
         else:
             raise ValueError("I need a link")
 
-
-
-
-
     async def _fetch_url(self, url, session):
         """
         Async Request
@@ -90,7 +90,7 @@ class Space:
         """
         print("Straining...")
         for index, html in enumerate(all_content):
-            print(f'page-{index}')
+            print(f"page-{index}")
             soup = BeautifulSoup(html, "lxml")
             articles = soup.select("article.message")
             post_id = [i["data-content"] for i in articles]
@@ -105,16 +105,16 @@ class Space:
         Setup all requests, await them, return the response.text
         """
         print("Building...")
-        #_get_pages
-        # run all coroutines
-        #_parse_soup to populate obj
         self._get_pages()
+        # returns all relevant links to self.links for reference
+        # populates self.data with author, title and language
         async with aiohttp.ClientSession() as session:
             futures = [self._fetch_url(url, session) for url in self.links]
             content = await asyncio.gather(*futures)
             text = [await i.text() for i in content]
+        # text contains all the html of all the relevant pages
         return text
-    
+
     def run(self):
         """
             Runs blocking async code, then runs function to parse response for each
@@ -125,5 +125,8 @@ class Space:
         """
         print("Running blocking function pls wait")
         all_content = asyncio.run(self.build())
+
+        # reads all the html returned from the awaited content
+        # grabs all relevant data and populates self.data with it.
         self._parse_soups(all_content)
-        print('self.data has been populated')
+        print("self.data has been populated")

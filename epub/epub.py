@@ -1,105 +1,97 @@
 from jinja2 import Environment, FileSystemLoader, select_autoescape, Template
+import epub 
 import tempfile
-import uuid
 import shutil
 
-env = Environment(
-    loader=FileSystemLoader("./templates"),
-    autoescape=select_autoescape(["html", "xml"]),
-)
 ##should have three functions.
-#create all the documentation in one function
-#zip the docs up
-#cleanup everything
+# create all the documentation in one function
+# zip the docs up
+# cleanup everything
+"""
+the shape of the data is assuredly this 
+{
+    docTitle: str
+    docAuthor: str
+    uid: str
+    filename: str
+    threadmarks: list
+    story: dict
+    lang: str
+    meta_inf: str
+    oebps: str
+}
+folder_structure should be this 
+Book
+    ++META_INF
+        -container.xml
+    ++OEBPS
+        -filename.xhtml ##chapters
+        -image.jpg ##all images
+    -content.opf
+    -mimetype
+    -page_styles.css *
+    -stylesheet.css *
+    -titlepage.xhtml*
+    -toc.ncx*
 
+#create filenames from threadmarks
+#create environment for jinja2
+#need to construct system as if you were reading 
+#grab and dump templates based on the files above using tempfiles
+#zip the tempdirectory and deliver somewhere
+#destroy the tempfile.
+
+"""
 class Epub:
-    def __init__(self, data):
-        """shape of scraper.data
-            threadmarks: [list of threadmarks]
-            lang: eng
-            author:
-            title:
-            story: { post_id: string}
-            uid:
-        """
+    def __init__(
+        self,
+        data
+    ):
         self.data = data
-        self.data["uid"] = str(uuid.uuid4())
-        self.data["filename"] = [
-            f'{i.replace(" ", "")}' for i in self.data["threadmarks"]
-        ]
-        self.data['oebps'] = ''
-        self.data['meta_inf'] = ''
+        self.data['filenames'] = [f'{chapter.replace(" ", "")}' for chapter in self.data['threadmarks']]
+        pl = FileSystemLoader('./templates')
+        self.env = Environment(
+            loader=pl,
+            autoescape=select_autoescape(['html', 'xml'])
+            )
 
-
-    def generate_ncx(self,location):
-        template = env.get_template("ncx_template.ncx")
-        template.stream(self.data).dump(f'{location}/toc.ncx')
-
-    def generate_opf(self, location):
-        template = env.get_template("opf_template.opf")
-        template.stream(self.data).dump(f'{location}/content.opf')
-
-    def generate_meta_inf(self, location):
-        Template("data_template").dump(f"{location}/container.xml")
-    
-
-    def generate_chapters(self, location):
-        template = env.get_template("chapter_template.xhtml")
-        for index, key in self.data["story"]:
-            template.stream(
-                {
-                    "threadmark": self.data["threadmarks"][index],
-                    "content": self.data["story"][key],
-                }
-            ).dump(f'{location}/{self.data["filename"][index]}')
-
-
-    def generate_title(self, location):
-        template = env.get_template("title_template.xhtml")
-        template.stream(self.data).dump(f'{location}/title.xhtml')
-
-    def generate_css(self, location):
-        env.get_template("page_css.css").stream().dump(f'{location}/page_style.css')
-        env.get_template("stylesheet.css").stream().dump(f'{location}/stylesheet.css')
-
-    def dir_constructor(self):
-        with tempfile.TemporaryDirectory(dir='/tmp') as parent:
-
-            #create nested directories
-            oebps = tempfile.mkdtemp(dir=parent)
-            meta_inf = tempfile.mkdtemp(dir=parent)
-
-            #i need these paths for later
-            self.data['oebps']+= oebps.split('/')[-1]
-            self.data['meta_inf'] += meta_inf.split('/')[-1]
-
-            #start dumping all docs
-            self.generate_title(parent)
-            self.generate_ncx(parent)
-            self.generate_meta_inf(meta_inf)
-            self.generate_opf(parent)
-            self.generate_chapters(oebps)
-            self.generate_css(parent)
-            Template('application/epub+zip').stream().dump(f'{parent}/mimetype')
-            #zip_it_all_together
-            shutil.make_archive(self.data['title'], 'zip',parent)
-    
-            
-
-
-
-
-
-
+    def construct(self):
+        parent = tempfile.mkdtemp()
+        self.env.get_template('page_css.css').stream(self.data).dump(
+                f'{parent}/page_styles.css'
+            )
+        self.env.get_template('stylesheet.css').stream(self.data).dump(
+                f'{parent}/stylesheet.css'
+            )
+        self.env.get_template('title_template.xhtml').stream(self.data).dump(
+                f'{parent}/titlepage.xhtml'    
+            )
+        self.env.get_template('ncx_template.ncx').stream(self.data).dump(
+                f'{parent}/toc.ncx'
+            )
+        self.env.get_template('opf_template.opf').stream(self.data).dump(
+                f'{parent}/content.opf'
+            )
+        print(parent)
 
         
 
-
-            
-
-
-
-
-
-
+    def tear_down(self):
+        pass
         
+
+
+
+
+
+
+
+
+
+if __name__ == "__main__":
+    x = {}
+    x["threadmarks"] = ["give war a chance" for i in range(23)]
+    x["oebps"] = "hello/thare"
+    x["meta_inf"] = "im/sorry/jon"
+
+    cheese = Epub(x)

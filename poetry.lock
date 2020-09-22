@@ -195,18 +195,6 @@ bcrypt = ["bcrypt"]
 
 [[package]]
 category = "main"
-description = "Ebook library which can handle EPUB2/EPUB3 and Kindle format"
-name = "ebooklib"
-optional = false
-python-versions = "*"
-version = "0.17.1"
-
-[package.dependencies]
-lxml = "*"
-six = "*"
-
-[[package]]
-category = "main"
 description = "Internationalized Domain Names in Applications (IDNA)"
 name = "idna"
 optional = false
@@ -560,7 +548,7 @@ setuptools = "*"
 test = ["zope.testing"]
 
 [metadata]
-content-hash = "38d85f165308243cb365a3f20dd9a14593a40fe4d2572d22b089bbaa4a8efc37"
+content-hash = "2b292cc633419c719aa3304d24eb00ff91417ab95c0271c65c2c0b21475f4ed0"
 python-versions = "^3.8"
 
 [metadata.files]
@@ -634,9 +622,6 @@ colorama = [
 django = [
     {file = "Django-3.1.1-py3-none-any.whl", hash = "sha256:b5fbb818e751f660fa2d576d9f40c34a4c615c8b48dd383f5216e609f383371f"},
     {file = "Django-3.1.1.tar.gz", hash = "sha256:59c8125ca873ed3bdae9c12b146fbbd6ed8d0f743e4cf5f5817af50c51f1fc2f"},
-]
-ebooklib = [
-    {file = "EbookLib-0.17.1.tar.gz", hash = "sha256:fe23e22c28050196c68db3e7b13b257bf39426d927cb395c6f2cc13ac11327f1"},
 ]
 idna = [
     {file = "idna-2.10-py2.py3-none-any.whl", hash = "sha256:b97d804b1e9b523befed77c48dacec60e6dcb0b5391d57af6a65a312a90648c0"},
