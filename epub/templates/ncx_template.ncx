@@ -25,7 +25,7 @@ including those that conform to the relaxed constraints of OPS 2.0 -->
   {% for key in data["story"].keys() %}
     <navPoint class="chapter" id="{{ key }}" playOrder="{{ loop.index }}">
       <navLabel><text>{{ data["threadmarks"][loop.index0] }}</text></navLabel>
-      <content src="data['oebps']/{{ data['filename'][loop.index0] }}.xhtml"/> <!-- name_from_manifest -->
+      <content src="{{ data['oebps'] }}/{{ data['filenames'][loop.index0] }}.xhtml"/> <!-- name_from_manifest -->
     </navPoint>
     {% endfor %}
   </navMap>

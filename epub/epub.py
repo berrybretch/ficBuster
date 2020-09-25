@@ -1,7 +1,8 @@
 from jinja2 import Environment, FileSystemLoader, select_autoescape, Template
-import epub 
+import epub
 import tempfile
 import shutil
+import pickle
 
 ##should have three functions.
 # create all the documentation in one function
@@ -42,56 +43,45 @@ Book
 #destroy the tempfile.
 
 """
+
+
 class Epub:
-    def __init__(
-        self,
-        data
-    ):
+    def __init__(self, data):
         self.data = data
-        self.data['filenames'] = [f'{chapter.replace(" ", "")}' for chapter in self.data['threadmarks']]
-        pl = FileSystemLoader('./templates')
-        self.env = Environment(
-            loader=pl,
-            autoescape=select_autoescape(['html', 'xml'])
-            )
+        self.data["filenames"] = [key for key in self.data["story"].keys()]
+        pl = FileSystemLoader("./templates")
+        self.env = Environment(loader=pl, autoescape=select_autoescape(["html", "xml"]))
 
     def construct(self):
+        # setting up directories here
         parent = tempfile.mkdtemp()
-        self.env.get_template('page_css.css').stream(self.data).dump(
-                f'{parent}/page_styles.css'
-            )
-        self.env.get_template('stylesheet.css').stream(self.data).dump(
-                f'{parent}/stylesheet.css'
-            )
-        self.env.get_template('title_template.xhtml').stream(self.data).dump(
-                f'{parent}/titlepage.xhtml'    
-            )
-        self.env.get_template('ncx_template.ncx').stream(self.data).dump(
-                f'{parent}/toc.ncx'
-            )
-        self.env.get_template('opf_template.opf').stream(self.data).dump(
-                f'{parent}/content.opf'
-            )
-        print(parent)
+        oebps = tempfile.mkdtemp(dir=parent)
+        meta_inf = tempfile.mkdtemp(dir=parent)
+        self.data["oebps"] = oebps.split("/")[-1]
+        self.data["meta_inf"] = meta_inf.split("/")[-1]
 
-        
-
-    def tear_down(self):
-        pass
-        
-
-
-
-
-
-
-
-
-
-if __name__ == "__main__":
-    x = {}
-    x["threadmarks"] = ["give war a chance" for i in range(23)]
-    x["oebps"] = "hello/thare"
-    x["meta_inf"] = "im/sorry/jon"
-
-    cheese = Epub(x)
+        # dumping files here
+        self.env.get_template("page_css.css").stream(data=self.data).dump(
+            f"{parent}/page_styles.css"
+        )
+        self.env.get_template("stylesheet.css").stream(data=self.data).dump(
+            f"{parent}/stylesheet.css"
+        )
+        self.env.get_template("title_template.xhtml").stream(data=self.data).dump(
+            f"{parent}/titlepage.xhtml"
+        )
+        self.env.get_template("ncx_template.ncx").stream(data=self.data).dump(
+            f"{parent}/toc.ncx"
+        )
+        self.env.get_template("opf_template.opf").stream(data=self.data).dump(
+            f"{parent}/content.opf"
+        )
+        self.env.get_template("meta_template").stream().dump(
+            f"{meta_inf}/container.xml"
+        )
+        for index, filename in enumerate(self.data["filenames"]):
+            self.env.get_template("chapter_template.xhtml").stream(
+                threadmark=self.data["threadmarks"][index],
+                content=self.data["story"][filename],
+            ).dump(f"{oebps}/{self.data['filenames'][index]}.xhtml")
+        self.parent = parent

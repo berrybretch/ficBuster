@@ -14,7 +14,7 @@
     <item href="stylesheet.css" id="css" media-type="text/css"/>
     <item href="title.xhtml" id="title_page" media-type="application/xhtml+xml" />
   {% for thread in data["threadmarks"] %}
-    <item id={{ data['filename'][loop.index0]}} href="{{data['oebps']}}/{{ data['filename'][loop-index0] }}.xhtml" media-type="application/xhtml+xml"/>
+    <item id={{ data['filenames'][loop.index0] }} href="{{data['oebps']}}/{{ data['filenames'][loop.index0] }}.xhtml" media-type="application/xhtml+xml"/>
     {% endfor  %}
   </manifest>
 
