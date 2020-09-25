@@ -1,7 +1,7 @@
 from jinja2 import Environment, FileSystemLoader, select_autoescape, Template
-import epub
 import tempfile
 import shutil
+import os
 import pickle
 
 ##should have three functions.
@@ -27,7 +27,6 @@ Book
         -container.xml
     ++OEBPS
         -filename.xhtml ##chapters
-        -image.jpg ##all images
     -content.opf
     -mimetype
     -page_styles.css *
@@ -37,10 +36,9 @@ Book
 
 #create filenames from threadmarks
 #create environment for jinja2
-#need to construct system as if you were reading 
-#grab and dump templates based on the files above using tempfiles
+#grab and dump templates based on the files above using tempdirectory
 #zip the tempdirectory and deliver somewhere
-#destroy the tempfile.
+#destroy the tempdirectory
 
 """
 
@@ -57,8 +55,13 @@ class Epub:
         parent = tempfile.mkdtemp()
         oebps = tempfile.mkdtemp(dir=parent)
         meta_inf = tempfile.mkdtemp(dir=parent)
+        
+        os.rename(meta_inf, f'{parent}/META-INF')
+        
+        meta_inf.replace(meta_inf.split('/')[-1], 'META-INF')
+
         self.data["oebps"] = oebps.split("/")[-1]
-        self.data["meta_inf"] = meta_inf.split("/")[-1]
+        self.data["meta_inf"] = 'META-INF'
 
         # dumping files here
         self.env.get_template("page_css.css").stream(data=self.data).dump(
@@ -79,9 +82,16 @@ class Epub:
         self.env.get_template("meta_template").stream().dump(
             f"{meta_inf}/container.xml"
         )
+        self.env.get_template('mimetype').stream().dump(
+            f"{parent}/mimetype"
+        )
         for index, filename in enumerate(self.data["filenames"]):
             self.env.get_template("chapter_template.xhtml").stream(
                 threadmark=self.data["threadmarks"][index],
                 content=self.data["story"][filename],
             ).dump(f"{oebps}/{self.data['filenames'][index]}.xhtml")
         self.parent = parent
+
+        @staticmethod
+        def zippper(path):
+            pass
