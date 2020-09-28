@@ -9,18 +9,7 @@ import pickle
 # zip the docs up
 # cleanup everything
 """
-the shape of the data is assuredly this 
-{
-    docTitle: str
-    docAuthor: str
-    uid: str
-    filename: str
-    threadmarks: list
-    story: dict
-    lang: str
-    meta_inf: str
-    oebps: str
-}
+
 folder_structure should be this 
 Book
     ++META_INF
@@ -34,12 +23,6 @@ Book
     -titlepage.xhtml*
     -toc.ncx*
 
-#create filenames from threadmarks
-#create environment for jinja2
-#grab and dump templates based on the files above using tempdirectory
-#zip the tempdirectory and deliver somewhere
-#destroy the tempdirectory
-
 """
 
 
@@ -49,6 +32,17 @@ class Epub:
         self.data["filenames"] = [key for key in self.data["story"].keys()]
         pl = FileSystemLoader("./templates")
         self.env = Environment(loader=pl, autoescape=select_autoescape(["html", "xml"]))
+        self.parent = ''
+        self.clean_data_kidogo()
+
+    def clean_data_kidogo(self):
+        #should be in space.py
+        for key in self.data['story'].keys():
+            self.data['story'][key] = self.data['story'][key].replace('<', '/~')
+            self.data['story'][key] = self.data['story'][key].replace('>', '~\\')
+
+
+
 
     def construct(self):
         # setting up directories here
@@ -57,7 +51,6 @@ class Epub:
         meta_inf = tempfile.mkdtemp(dir=parent)
         
         os.rename(meta_inf, f'{parent}/META-INF')
-        
         meta_inf.replace(meta_inf.split('/')[-1], 'META-INF')
 
         self.data["oebps"] = oebps.split("/")[-1]
@@ -80,7 +73,7 @@ class Epub:
             f"{parent}/content.opf"
         )
         self.env.get_template("meta_template").stream().dump(
-            f"{meta_inf}/container.xml"
+            f"{parent}/META-INF/container.xml"
         )
         self.env.get_template('mimetype').stream().dump(
             f"{parent}/mimetype"
@@ -92,6 +85,14 @@ class Epub:
             ).dump(f"{oebps}/{self.data['filenames'][index]}.xhtml")
         self.parent = parent
 
-        @staticmethod
-        def zippper(path):
-            pass
+    @staticmethod
+    def zipper(name, path):
+        return shutil.make_archive(name, 'zip',path)
+
+
+
+if __name__ == "__main__":
+    x = pickle.load(open('../data.pickle', 'rb'))
+    cheese = Epub(x)
+    cheese.construct()
+    zip = cheese.zipper('example', cheese.parent)
