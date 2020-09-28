@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<package version="2.0" xmlns="http://www.idpf.org/2007/opf" unique-identifier="BookId">
+
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:opf="http://www.idpf.org/2007/opf">
+    <dc:title>{{ data["docTitle"] }}</dc:title>
+    <dc:language>{{ data["lang"] }}</dc:language>
+    <dc:identifier id="BookId" opf:scheme="UUID">{{ data["uid"] }}</dc:identifier>
+    <dc:creator opf:file-as="{{ data['docAuthor'] }}" opf:role="aut">{{ data["docAuthor"] }}</dc:creator>
+  </metadata>
+
+  <manifest>
+    <item href="toc.ncx" id="ncx" media-type="application/x-dtbncx+xml"/>
+    <item href="page_styles.css" id="page_css" media-type="text/css"/>
+    <item href="stylesheet.css" id="css" media-type="text/css"/>
+    <item href="titlepage.xhtml" id="title_page" media-type="application/xhtml+xml" />
+  {% for thread in data["threadmarks"] %}
+    <item id="{{ data['filenames'][loop.index0] }}" href="{{data['oebps']}}/{{ data['filenames'][loop.index0] }}.xhtml" media-type="application/xhtml+xml"/>
+    {% endfor  %}
+  </manifest>
+
+  <spine toc="ncx">
+    {% for id in data["story"].keys() %}
+    <itemref idref="{{ id }}"/>
+    {% endfor %}
+  </spine>
+
+ 
+</package>
