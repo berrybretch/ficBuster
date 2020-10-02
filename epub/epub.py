@@ -1,28 +1,16 @@
 from jinja2 import Environment, FileSystemLoader, select_autoescape, Template
 import tempfile
-import shutil
 import os
 import pickle
+import zipfile
 
 ##should have three functions.
 # create all the documentation in one function
 # zip the docs up
 # cleanup everything
+
 """
-
-folder_structure should be this 
-Book
-    ++META_INF
-        -container.xml
-    ++OEBPS
-        -filename.xhtml ##chapters
-    -content.opf
-    -mimetype
-    -page_styles.css *
-    -stylesheet.css *
-    -titlepage.xhtml*
-    -toc.ncx*
-
+zip it but do not compress because mimetype needs to not be compressed
 """
 
 
@@ -41,21 +29,15 @@ class Epub:
             self.data['story'][key] = self.data['story'][key].replace('<', '/~')
             self.data['story'][key] = self.data['story'][key].replace('>', '~\\')
 
-
-
-
     def construct(self):
         # setting up directories here
         parent = tempfile.mkdtemp()
         oebps = tempfile.mkdtemp(dir=parent)
         meta_inf = tempfile.mkdtemp(dir=parent)
-        
         os.rename(meta_inf, f'{parent}/META-INF')
         meta_inf.replace(meta_inf.split('/')[-1], 'META-INF')
-
         self.data["oebps"] = oebps.split("/")[-1]
         self.data["meta_inf"] = 'META-INF'
-
         # dumping files here
         self.env.get_template("page_css.css").stream(data=self.data).dump(
             f"{parent}/page_styles.css"
@@ -86,13 +68,30 @@ class Epub:
         self.parent = parent
 
     @staticmethod
-    def zipper(name, path):
-        return shutil.make_archive(name, 'zip',path)
-
+    def zipper(name,path):
+        try:
+            zip = zipfile.ZipFile(
+                f'/tmp/{name}.epub',
+                mode='x',
+                compression=zipfile.ZIP_STORED
+                )
+            os.chdir(path)    
+            for root, dirs, files in os.walk('.'):
+                for file in files:
+                    zip.write(os.path.join(root, file))
+        except FileExistsError as e:
+            print(e)
+            print('The zip already exists')
+        except Exception as e:
+            print('any other error')
+            print(e)
+        finally:
+            zip.close()
 
 
 if __name__ == "__main__":
-    x = pickle.load(open('../data.pickle', 'rb'))
-    cheese = Epub(x)
-    cheese.construct()
-    zip = cheese.zipper('example', cheese.parent)
+    data = pickle.load(open('../data.pickle', 'rb'))
+    book = Epub(data)
+    book.construct()
+    book.zipper(book.data['uid'], book.parent)
+
