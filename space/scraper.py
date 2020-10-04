@@ -4,11 +4,22 @@ import re
 import asyncio
 import aiohttp
 import uuid
+from .validator import validate_url
+from .decorators import decor
+
+'''
+https://forums.spacebattles.com/threads/of-worms-and-magus-fate-warcraft-si.887419/
+'''
+
+
+#how do i handle multiple requests?q?
+#how do i handle timeouts? i dont/decorators
+#all requests need to retry after certain amount of time/decorator
 
 
 class Space:
     def __init__(self, url):
-        self.url = self._validate_url(url)
+        self.url = validate_url(url)
         self.data = {}
         self.data["oebps"] = ""
         self.data["meta_inf"] = ""
@@ -46,28 +57,7 @@ class Space:
         )
         self.links = [self.url + "/page-{}".format(i + 1) for i in range(pages)]
 
-    @staticmethod
-    def _validate_url(url=None):
-        """
-        Check if the url is good.
-        WIP
-        """
-        print(f"Validating {url}...")
-        if url:
-            reg = re.compile("https://forums.spacebattles.com/threads/(.*?)")
-            url = url.rstrip("/")
-            if reg.match(url):
-                if "/reader" in url:
-                    print("Url seems fine")
-                    return url
-                else:
-                    print("Url seems fine")
-                    return url + "/reader"
-            else:
-                raise ValueError("Spacebattles only pls")
-        else:
-            raise ValueError("I need a link")
-
+    @decor
     async def _fetch_url(self, url, session):
         """
         Async Request
@@ -77,8 +67,12 @@ class Space:
         returns:
             coroutine to be executed in async
         """
+        response = None
         print(f"Fetching {url}...")
-        return await session.get(url)
+        while not response:
+            response = await session.get(url)
+        return response
+
 
     def _parse_soups(self, all_content):
         """
@@ -125,8 +119,8 @@ class Space:
         """
         print("Running blocking function pls wait")
         all_content = asyncio.run(self.build())
-
         # reads all the html returned from the awaited content
         # grabs all relevant data and populates self.data with it.
         self._parse_soups(all_content)
         print("self.data has been populated")
+
