@@ -9,7 +9,6 @@ def validate_url(url:str)-> str:
     returns:
         url:str
     '''
-    print("Validating url...")
     parsed = urlparse(url)
     regex = re.compile('/threads/[a-z\-]+.[0-9]+/?')
     if parsed.scheme != 'https':
@@ -18,8 +17,8 @@ def validate_url(url:str)-> str:
         raise ValueError('Wrong link Type')
     if not regex.fullmatch(parsed.path):
         raise ValueError('Wrong link Type')
-    print('Link seems valid.')
+    if url.endswith('/'):
+        url.rstrip('/')
     return url
-
 
 

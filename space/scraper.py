@@ -4,17 +4,14 @@ import re
 import asyncio
 import aiohttp
 import uuid
-from .validator import validate_url
-from .decorators import decor
-
-'''
-https://forums.spacebattles.com/threads/of-worms-and-magus-fate-warcraft-si.887419/
-'''
+from validator import validate_url
+from decorators import decor
 
 
-#how do i handle multiple requests?q?
-#how do i handle timeouts? i dont/decorators
-#all requests need to retry after certain amount of time/decorator
+
+#how do i handle multiple requests?
+#how do i handle timeouts? i dont
+#all requests need to retry after certain amount of time
 
 
 class Space:
@@ -57,8 +54,9 @@ class Space:
         )
         self.links = [self.url + "/page-{}".format(i + 1) for i in range(pages)]
 
+    @staticmethod
     @decor
-    async def _fetch_url(self, url, session):
+    async def _fetch_url(url, session):
         """
         Async Request
         params:
@@ -67,12 +65,8 @@ class Space:
         returns:
             coroutine to be executed in async
         """
-        response = None
         print(f"Fetching {url}...")
-        while not response:
-            response = await session.get(url)
-        return response
-
+        return await session.get(url)
 
     def _parse_soups(self, all_content):
         """
@@ -103,7 +97,7 @@ class Space:
         # returns all relevant links to self.links for reference
         # populates self.data with author, title and language
         async with aiohttp.ClientSession() as session:
-            futures = [self._fetch_url(url, session) for url in self.links]
+            futures = [_fetch_url(url, session) for url in self.links]
             content = await asyncio.gather(*futures)
             text = [await i.text() for i in content]
         # text contains all the html of all the relevant pages
@@ -119,8 +113,8 @@ class Space:
         """
         print("Running blocking function pls wait")
         all_content = asyncio.run(self.build())
+
         # reads all the html returned from the awaited content
         # grabs all relevant data and populates self.data with it.
         self._parse_soups(all_content)
         print("self.data has been populated")
-
