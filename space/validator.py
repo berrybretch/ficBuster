@@ -10,7 +10,7 @@ def validate_url(url:str)-> str:
         url:str
     '''
     parsed = urlparse(url)
-    regex = re.compile('/threads/[a-z\-]+.[0-9]+/?')
+    regex = re.compile('/threads/[a-z\-]+.[0-9]+/reader/?')
     if parsed.scheme != 'https':
         raise ValueError('Wrong link Type')
     if parsed.netloc != 'forums.spacebattles.com':

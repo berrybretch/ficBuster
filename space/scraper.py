@@ -18,8 +18,6 @@ class Space:
     def __init__(self, url):
         self.url = validate_url(url)
         self.data = {}
-        self.data["oebps"] = ""
-        self.data["meta_inf"] = ""
         self.data["uid"] = str(uuid.uuid4())
         self.data["threadmarks"] = []
         self.data["story"] = {}
@@ -55,7 +53,7 @@ class Space:
         self.links = [self.url + "/page-{}".format(i + 1) for i in range(pages)]
 
     @staticmethod
-    @decor
+    #@decor
     async def _fetch_url(url, session):
         """
         Async Request

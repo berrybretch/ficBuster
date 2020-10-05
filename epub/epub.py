@@ -18,6 +18,8 @@ class Epub:
     def __init__(self, data):
         self.data = data
         self.data["filenames"] = [key for key in self.data["story"].keys()]
+        self.data["oebps"] = ""
+        self.data["meta_inf"] = ""
         pl = FileSystemLoader("./templates")
         self.env = Environment(loader=pl, autoescape=select_autoescape(["html", "xml"]))
         self.parent = ''

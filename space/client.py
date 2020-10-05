@@ -1,10 +1,8 @@
 import asyncio
 import aiohttp
 from validator import validate_url
-from decorators import decor
 from bs4 import BeautifulSoup
 from tenacity import retry
-
 
 
 class Mine:
@@ -40,16 +38,18 @@ class Mine:
                 number_of_links = int(tags[-1].text)
                 print(f'Pages=={number_of_links}')
             urls = [
-                f'{self.url}/page-{i+1}' for i in range(number_of_links)
+                f'{self.url}page-{i+1}' for i in range(number_of_links)
             ]
             tasks = [self.fetch(url, session=session) for url in urls]
             future = await asyncio.gather(*tasks)
-            return future
+            blob = [await i.text() for i in future]
+            return blob
 
-    def start(self):
+    def main(self):
         '''
         Runs the coroutine to generate the responses.
         '''
         return asyncio.run(self.collect())
-
+        
     
+   
