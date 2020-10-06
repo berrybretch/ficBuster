@@ -22,24 +22,24 @@ class Epub:
         self.data["meta_inf"] = ""
         pl = FileSystemLoader("./templates")
         self.env = Environment(loader=pl, autoescape=select_autoescape(["html", "xml"]))
-        self.parent = ''
+        self.parent = ""
         self.clean_data_kidogo()
 
     def clean_data_kidogo(self):
-        #should be in space.py
-        for key in self.data['story'].keys():
-            self.data['story'][key] = self.data['story'][key].replace('<', '/~')
-            self.data['story'][key] = self.data['story'][key].replace('>', '~\\')
+        # should be in space.py
+        for key in self.data["story"].keys():
+            self.data["story"][key] = self.data["story"][key].replace("<", "/~")
+            self.data["story"][key] = self.data["story"][key].replace(">", "~\\")
 
     def construct(self):
         # setting up directories here
         parent = tempfile.mkdtemp()
         oebps = tempfile.mkdtemp(dir=parent)
         meta_inf = tempfile.mkdtemp(dir=parent)
-        os.rename(meta_inf, f'{parent}/META-INF')
-        meta_inf.replace(meta_inf.split('/')[-1], 'META-INF')
+        os.rename(meta_inf, f"{parent}/META-INF")
+        meta_inf.replace(meta_inf.split("/")[-1], "META-INF")
         self.data["oebps"] = oebps.split("/")[-1]
-        self.data["meta_inf"] = 'META-INF'
+        self.data["meta_inf"] = "META-INF"
         # dumping files here
         self.env.get_template("page_css.css").stream(data=self.data).dump(
             f"{parent}/page_styles.css"
@@ -59,9 +59,7 @@ class Epub:
         self.env.get_template("meta_template").stream().dump(
             f"{parent}/META-INF/container.xml"
         )
-        self.env.get_template('mimetype').stream().dump(
-            f"{parent}/mimetype"
-        )
+        self.env.get_template("mimetype").stream().dump(f"{parent}/mimetype")
         for index, filename in enumerate(self.data["filenames"]):
             self.env.get_template("chapter_template.xhtml").stream(
                 threadmark=self.data["threadmarks"][index],
@@ -70,30 +68,27 @@ class Epub:
         self.parent = parent
 
     @staticmethod
-    def zipper(name,path):
+    def zipper(name, path):
         try:
             zip = zipfile.ZipFile(
-                f'/tmp/{name}.epub',
-                mode='x',
-                compression=zipfile.ZIP_STORED
-                )
-            os.chdir(path)    
-            for root, dirs, files in os.walk('.'):
+                f"/tmp/{name}.epub", mode="x", compression=zipfile.ZIP_STORED
+            )
+            os.chdir(path)
+            for root, dirs, files in os.walk("."):
                 for file in files:
                     zip.write(os.path.join(root, file))
         except FileExistsError as e:
             print(e)
-            print('The zip already exists')
+            print("The zip already exists")
         except Exception as e:
-            print('any other error')
+            print("any other error")
             print(e)
         finally:
             zip.close()
 
 
 if __name__ == "__main__":
-    data = pickle.load(open('../data.pickle', 'rb'))
+    data = pickle.load(open("../data.pickle", "rb"))
     book = Epub(data)
     book.construct()
-    book.zipper(book.data['uid'], book.parent)
-
+    book.zipper(book.data["uid"], book.parent)

@@ -8,10 +8,9 @@ from validator import validate_url
 from decorators import decor
 
 
-
-#how do i handle multiple requests?
-#how do i handle timeouts? i dont
-#all requests need to retry after certain amount of time
+# how do i handle multiple requests?
+# how do i handle timeouts? i dont
+# all requests need to retry after certain amount of time
 
 
 class Space:
@@ -53,7 +52,6 @@ class Space:
         self.links = [self.url + "/page-{}".format(i + 1) for i in range(pages)]
 
     @staticmethod
-    #@decor
     async def _fetch_url(url, session):
         """
         Async Request
