@@ -1,6 +1,7 @@
 from jinja2 import Environment, FileSystemLoader, select_autoescape, Template
 import tempfile
 import os
+import uuid
 import pickle
 import zipfile
 
@@ -20,16 +21,11 @@ class Epub:
         self.data["filenames"] = [key for key in self.data["story"].keys()]
         self.data["oebps"] = ""
         self.data["meta_inf"] = ""
+        self.data["uid"] = uuid.uuid4()
         pl = FileSystemLoader("./templates")
         self.env = Environment(loader=pl, autoescape=select_autoescape(["html", "xml"]))
         self.parent = ""
-        self.clean_data_kidogo()
-
-    def clean_data_kidogo(self):
-        # should be in space.py
-        for key in self.data["story"].keys():
-            self.data["story"][key] = self.data["story"][key].replace("<", "/~")
-            self.data["story"][key] = self.data["story"][key].replace(">", "~\\")
+        self.construct()
 
     def construct(self):
         # setting up directories here
@@ -85,10 +81,3 @@ class Epub:
             print(e)
         finally:
             zip.close()
-
-
-if __name__ == "__main__":
-    data = pickle.load(open("../data.pickle", "rb"))
-    book = Epub(data)
-    book.construct()
-    book.zipper(book.data["uid"], book.parent)

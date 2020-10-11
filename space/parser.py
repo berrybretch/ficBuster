@@ -47,9 +47,13 @@ class Parser:
             x = self.parse_html(i)
             self.data["story"] = dict(self.data["story"], **x[0])
             self.data["threadmarks"].extend(x[1])
+        for k, v in self.data["story"].items():
+            v = v.replace("<", "/~")
+            v = v.replace(">", "~\\")
 
     def __repr__(self):
         temp = []
         for key, value in self.data["story"].items():
             temp.append(f"{key} : {len(value)}")
         return "\n".join(temp)
+

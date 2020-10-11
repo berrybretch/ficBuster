@@ -1,15 +1,14 @@
 import asyncio
 import aiohttp
-from validator import validate_url
+from .validator import validate_url
 from bs4 import BeautifulSoup, SoupStrainer
-from tenacity import retry
 
 
 class Mine:
     def __init__(self, url):
         self.url = validate_url(url)
+        self.responses = self.main()
 
-    @retry
     async def fetch(self, url: str, session=None):
         """
         Returns awaitable response
@@ -27,7 +26,7 @@ class Mine:
         """
         async with aiohttp.ClientSession() as session:
             response = await self.fetch(self.url, session=session)
-            strainer = SoupStrainer('li', class_='pageNav-page')
+            strainer = SoupStrainer("li", class_="pageNav-page")
             text = await response.text()
             soup = BeautifulSoup(text, "lxml", parse_only=strainer)
             tags = soup.findAll("li", class_="pageNav-page")
