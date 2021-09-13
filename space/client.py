@@ -12,8 +12,8 @@ class Mine:
     async def fetch(self, url: str, session=None):
         """
         Returns awaitable response
-        params: 
-            url:str   
+        params:
+            url:str
         """
         return await session.get(url)
 

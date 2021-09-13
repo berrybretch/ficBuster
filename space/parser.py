@@ -5,11 +5,11 @@ class Parser:
     def __init__(self, pages):
         """
         data:
-    
+
         only need to get these once, anywhere
         {
         docAuthor:str
-        docTitle:str  
+        docTitle:str
         }
 
         threadmarks:[ str for str in list]
@@ -56,4 +56,3 @@ class Parser:
         for key, value in self.data["story"].items():
             temp.append(f"{key} : {len(value)}")
         return "\n".join(temp)
-
